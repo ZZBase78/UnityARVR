@@ -9,7 +9,7 @@ public class MyTeleport : Teleportable
     [SerializeField] private float Speed;
     [SerializeField] private float CoolDown;
 
-    public IEnumerator StartTeleport(RaycastResult hitResult, Vector3 position, Quaternion rotation, float delay)
+    public override IEnumerator StartTeleport(RaycastResult hitResult, Vector3 position, Quaternion rotation, float delay)
     {
         while (true)
         {
