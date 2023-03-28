@@ -24,9 +24,12 @@ public class CharMagnetic : MonoBehaviour
     [SerializeField] private Material _blueMat;
     [SerializeField] private Material _yellowMat;
     [SerializeField] private ParticleSystem _hlReference;
+    [SerializeField] private float _recolorDistance = 0.5f;
 
     public void SetBlue(Transform trans)
     {
+        if (trans == _magneticSpell.redObj) EreaseSpell();
+
         _magneticSpell.blueObj = trans;
         _magneticSpell.bluePos = trans.position;
         Highlighting(true, trans);
@@ -35,6 +38,8 @@ public class CharMagnetic : MonoBehaviour
 
     public void SetRed(Transform trans)
     {
+        if (trans == _magneticSpell.blueObj) EreaseSpell();
+
         _magneticSpell.redObj = trans;
         _magneticSpell.redPos = trans.position;
         Highlighting(false, trans);
@@ -43,6 +48,7 @@ public class CharMagnetic : MonoBehaviour
 
     public void SetBlue(Vector3 trans)
     {
+        if (_magneticSpell.redObj != null && Vector3.Distance(_magneticSpell.redPos, trans) <= _recolorDistance) EreaseSpell();
         _magneticSpell.blueObj = _blueHolder;
         _magneticSpell.bluePos = trans;
         _blueHolder.position = trans;
@@ -52,6 +58,7 @@ public class CharMagnetic : MonoBehaviour
 
     public void SetRed(Vector3 trans)
     {
+        if (_magneticSpell.blueObj != null && Vector3.Distance(_magneticSpell.bluePos, trans) <= _recolorDistance) EreaseSpell();
         _magneticSpell.redObj = _redHolder;
         _magneticSpell.redPos = trans;
         _redHolder.position = trans;
@@ -106,7 +113,8 @@ public class CharMagnetic : MonoBehaviour
 
     private void Highlighting(bool isBlue, Transform trans)
     {
-        ParticleSystem ps = Instantiate(_hlReference, trans, false);
+        ParticleSystem ps = trans.GetComponent<ParticleSystem>();
+        if (ps == null) ps = Instantiate(_hlReference, trans, false);
 
         Renderer renderer = ps.GetComponent<Renderer>();
 
@@ -127,10 +135,17 @@ public class CharMagnetic : MonoBehaviour
         _magneticSpell.blueObj = null;
         _magneticSpell.redObj = null;
 
+        DestroyParticleSystems();
+        DisableHolders();
+    }
+
+    private void DestroyParticleSystems()
+    {
         for (int i = 0; i < _magneticSpell.highLight.Count; i++)
         {
-            _magneticSpell.highLight[i].GetComponent<Renderer>().material = _yellowMat;
+            Destroy(_magneticSpell.highLight[i]);
         }
+        _magneticSpell.highLight.Clear();
     }
 
     public void DestroyAllJoints()
@@ -151,12 +166,8 @@ public class CharMagnetic : MonoBehaviour
         _magneticSpell.rb.Clear();
         EreaseSpell();
 
-        for (int i = 0; i < _magneticSpell.highLight.Count; i++)
-        {
-            Destroy(_magneticSpell.highLight[i]);
-        }
+        DestroyParticleSystems();
 
-        _magneticSpell.highLight.Clear();
         DisableHolders();
     }
 
