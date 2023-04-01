@@ -20,6 +20,8 @@ namespace Valve.VR
 
         public static SteamVR_Render instance { get { return SteamVR_Behaviour.instance.steamvr_render; } }
 
+        public ETrackingUniverseOrigin trackingSpace = ETrackingUniverseOrigin.TrackingUniverseStanding;
+
         static private bool isQuitting;
         void OnApplicationQuit()
         {

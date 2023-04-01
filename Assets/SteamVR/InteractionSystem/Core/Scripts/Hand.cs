@@ -75,6 +75,8 @@ namespace Valve.VR.InteractionSystem
         public float noSteamVRFallbackMaxDistanceWithItem = 0.5f;
         private float noSteamVRFallbackInteractorDistance = -1.0f;
 
+        public SteamVR_Controller.Device controller;
+
         public GameObject renderModelPrefab;
         [HideInInspector]
         public List<RenderModel> renderModels = new List<RenderModel>();
@@ -350,6 +352,90 @@ namespace Valve.VR.InteractionSystem
             }
         }
 
+        //-------------------------------------------------
+        // Attach a GameObject to this GameObject
+        //
+        // objectToAttach - The GameObject to attach
+        // flags - The flags to use for attaching the object
+        // attachmentPoint - Name of the GameObject in the hierarchy of this Hand which should act as the attachment point for this GameObject
+        //-------------------------------------------------
+        public void AttachObject(GameObject objectToAttach, AttachmentFlags flags = defaultAttachmentFlags, string attachmentPoint = "")
+        {
+            if (flags == 0)
+            {
+                flags = defaultAttachmentFlags;
+            }
+
+            //Make sure top object on stack is non-null
+            CleanUpAttachedObjectStack();
+
+            //Detach the object if it is already attached so that it can get re-attached at the top of the stack
+            DetachObject(objectToAttach);
+
+            //Detach from the other hand if requested
+            if (((flags & AttachmentFlags.DetachFromOtherHand) == AttachmentFlags.DetachFromOtherHand) && otherHand)
+            {
+                otherHand.DetachObject(objectToAttach);
+            }
+
+            if ((flags & AttachmentFlags.DetachOthers) == AttachmentFlags.DetachOthers)
+            {
+                //Detach all the objects from the stack
+                while (attachedObjects.Count > 0)
+                {
+                    DetachObject(attachedObjects[0].attachedObject);
+                }
+            }
+
+            if (currentAttachedObject)
+            {
+                currentAttachedObject.SendMessage("OnHandFocusLost", this, SendMessageOptions.DontRequireReceiver);
+            }
+
+            AttachedObject attachedObject = new AttachedObject();
+            attachedObject.attachedObject = objectToAttach;
+            attachedObject.originalParent = objectToAttach.transform.parent != null ? objectToAttach.transform.parent.gameObject : null;
+            if ((flags & AttachmentFlags.ParentToHand) == AttachmentFlags.ParentToHand)
+            {
+                //Parent the object to the hand
+                objectToAttach.transform.parent = GetAttachmentTransform(attachmentPoint);
+                attachedObject.isParentedToHand = true;
+            }
+            else
+            {
+                attachedObject.isParentedToHand = false;
+            }
+            attachedObjects.Add(attachedObject);
+
+            if ((flags & AttachmentFlags.SnapOnAttach) == AttachmentFlags.SnapOnAttach)
+            {
+                objectToAttach.transform.localPosition = Vector3.zero;
+                objectToAttach.transform.localRotation = Quaternion.identity;
+            }
+
+            HandDebugLog("AttachObject " + objectToAttach);
+            objectToAttach.SendMessage("OnAttachedToHand", this, SendMessageOptions.DontRequireReceiver);
+
+            UpdateHovering();
+        }
+
+        //-------------------------------------------------
+		public Transform GetAttachmentTransform(string attachmentPoint = "")
+        {
+            Transform attachmentTransform = null;
+
+            if (!string.IsNullOrEmpty(attachmentPoint))
+            {
+                attachmentTransform = transform.Find(attachmentPoint);
+            }
+
+            if (!attachmentTransform)
+            {
+                attachmentTransform = this.transform;
+            }
+
+            return attachmentTransform;
+        }
 
         //-------------------------------------------------
         // Attach a GameObject to this GameObject
