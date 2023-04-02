@@ -137,6 +137,8 @@ namespace Valve.VR.InteractionSystem
 
             if (startingGrabType == GrabTypes.Grip)
             {
+                if (gameObject.GetComponent<Collider>().isTrigger) return;
+
 				hand.AttachObject( gameObject, startingGrabType, attachmentFlags, attachmentOffset );
                 hand.HideGrabHint();
             }
