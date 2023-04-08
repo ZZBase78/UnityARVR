@@ -5,6 +5,8 @@ using Vuforia;
 
 public class PlayerController : UnitController
 {
+    [SerializeField] private float maxDistance = 5f;
+
     private VirtualButtonBehaviour virtualButton;
 
     private void Start()
@@ -17,7 +19,15 @@ public class PlayerController : UnitController
     {
         if (!isDead && UnitManager.enemy != null)
         {
-            combat.Attack(UnitManager.enemy.health);
+            if (Vector3.Distance(UnitManager.enemy.transform.position, transform.position) <= maxDistance)
+            {
+                combat.Attack(UnitManager.enemy.health);
+            }
+
+            Vector3 enemyPosition = UnitManager.enemy.transform.position;
+            Vector3 direction = enemyPosition - transform.position;
+
+            transform.rotation = Quaternion.LookRotation(direction);
         }
     }
 
